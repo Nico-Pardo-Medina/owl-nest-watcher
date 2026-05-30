@@ -1,81 +1,10 @@
-import datetime
-import imutils
-import cv2
 import os
-import numpy as np
 from tkinter import *
 from tkinter import ttk
 from tkinter import filedialog
 from tkinter import messagebox
 
-
-def movement_detector(carpeta, carpetanueva, file_title, min_area, contrast, brightness, speed, time_that_has_to_pass):
-    with open(f'{carpetanueva}/{file_title}.txt', 'w') as f:
-        for i,video in enumerate(os.listdir(carpeta)):
-            displayedText.set(f"Analizando archivo {i+1} de {len(os.listdir(carpeta))}")
-            label.update_idletasks()
-            f.write(f"{video}:\n")
-            video = str(f"{carpeta}/{video}")
-            firstFrame = None
-            vs = cv2.VideoCapture(video)
-            if not vs.isOpened():
-                f.write(f"El archivo no es un vídeo o no se puede abrir.\n\n")
-                continue
-            fps = vs.get(cv2.CAP_PROP_FPS)
-            frames = 1
-            while True:
-                frame = vs.read()
-                frame = frame[1]
-                owlIs = False
-                if frame is None:
-                    break
-                if firstFrame is None:
-                    frames -= 1
-                    last_message = False
-                    time_without_change = 0
-                frames += 1
-                time_without_change +=1
-                if (frames-1) % (fps * speed) == 0:
-                    frame = imutils.resize(frame, width=500)
-                    new_image = cv2.cvtColor(frame, cv2.COLOR_BGR2HSV)
-                    new_image[:,:,2] = np.clip(contrast * new_image[:,:,2] + brightness, 0, 255)
-                    new_image = cv2.cvtColor(new_image, cv2.COLOR_HSV2BGR)
-                    gray = cv2.cvtColor(new_image, cv2.COLOR_BGR2GRAY)
-                    gray = cv2.GaussianBlur(gray, (21, 21), 0)
-                    if frames == 0:
-                        duration = 0
-                    else:
-                        duration = frames / fps
-                    duration-=0.040000
-                    timestamp = str(datetime.timedelta(seconds=duration))
-                    if firstFrame is None:
-                        firstFrame = gray
-                        owlWas = False
-                        f.write(f"No hay actividad: {timestamp}\n")
-                    frameDelta = cv2.absdiff(firstFrame, gray)
-                    thresh1 = cv2.threshold(frameDelta, 25, 255, cv2.THRESH_BINARY)[1]
-                    thresh = cv2.dilate(thresh1, None, iterations=2)
-                    cnts = cv2.findContours(thresh.copy(), cv2.RETR_EXTERNAL,
-                        cv2.CHAIN_APPROX_SIMPLE)
-                    cnts = imutils.grab_contours(cnts)
-                    for c in cnts:
-                        if cv2.contourArea(c) < min_area:
-                            continue
-                        (x, y, w, h) = cv2.boundingRect(c)
-                        cv2.rectangle(frame, (x, y), (x + w, y + h), (0, 255, 0), 2)
-                        owlIs = True
-                    if owlIs != owlWas:
-                        time_without_change = 0
-                        if (owlIs == True) and (last_message == False):
-                            f.write(f"Empieza a haber actividad: {timestamp}\n")
-                            last_message = True
-                    if (owlIs == False) and (time_without_change > fps * time_that_has_to_pass) and (last_message == True):
-                        f.write(f"Deja de haber actividad: {timestamp}\n")
-                        last_message = False
-                    owlWas = owlIs
-            vs.release()
-            f.write(f"Acaba el vídeo: {timestamp}\n\n")
-    messagebox.showinfo(message="El proceso ha finalizado con éxito.")
+from detector import process_videos
 
 
 def browse_button():
@@ -83,15 +12,30 @@ def browse_button():
     filename = filedialog.askdirectory()
     old_folder_path = filename
     button_videos_folder_label.config(text=filename)
-    print(filename)
 
 def browse_button2():
     global new_folder_path
     filename = filedialog.askdirectory()
     new_folder_path = filename
     button_txt_folder_label.config(text=filename)
-    print(filename)
 
+def run():
+    def on_progress(current, total):
+        displayedText.set(f"Analizando archivo {current} de {total}")
+        label.update_idletasks()
+
+    process_videos(
+        source_folder=old_folder_path,
+        output_folder=new_folder_path,
+        file_title=file_title_grid.get(),
+        min_area=float(min_area_grid.get()),
+        contrast=float(contrast_grid.get()),
+        brightness=int(brightness_grid.get()),
+        speed=float(speed_grid.get()),
+        time_that_has_to_pass=float(time_that_has_to_pass_grid.get()),
+        on_progress=on_progress,
+    )
+    messagebox.showinfo(message="El proceso ha finalizado con éxito.")
 
 
 if __name__ == "__main__":
@@ -157,16 +101,7 @@ if __name__ == "__main__":
     time_that_has_to_pass_grid.grid(row=time_that_has_to_pass_grid_position[0],column=time_that_has_to_pass_grid_position[1],padx=padx,pady=pady)
     time_that_has_to_pass_grid.insert(END,0)
     min_area_grid.insert(END,500)
-    main_button = ttk.Button(text="Ejecutar",command=lambda: movement_detector(
-        old_folder_path,
-        new_folder_path,
-        file_title=file_title_grid.get(),
-        min_area=float(min_area_grid.get()),
-        contrast=float(contrast_grid.get()),
-        brightness=int(brightness_grid.get()),
-        speed=float(speed_grid.get()),
-        time_that_has_to_pass=float(time_that_has_to_pass_grid.get()),
-    ))
+    main_button = ttk.Button(text="Ejecutar", command=run)
     main_button.grid(row=main_button_position[0],column=main_button_position[1],padx=padx,pady=pady)
     displayedText = StringVar()
     label = ttk.Label(textvariable=displayedText)
