@@ -53,11 +53,11 @@ def movement_detector(carpeta,carpetanueva):
                     else:
                         duration = frames / fps
                     duration-=0.040000
-                    time = str(datetime.timedelta(seconds=duration))
+                    timestamp = str(datetime.timedelta(seconds=duration))
                     if firstFrame is None:
                         firstFrame = gray
                         owlWas = False
-                        f.write(f"No hay actividad: {time}\n")
+                        f.write(f"No hay actividad: {timestamp}\n")
                     frameDelta = cv2.absdiff(firstFrame, gray)
                     thresh1 = cv2.threshold(frameDelta, 25, 255, cv2.THRESH_BINARY)[1]
                     thresh = cv2.dilate(thresh1, None, iterations=2)
@@ -73,14 +73,14 @@ def movement_detector(carpeta,carpetanueva):
                     if owlIs != owlWas:
                         time_without_change = 0
                         if (owlIs == True) and (last_message == False):
-                            f.write(f"Empieza a haber actividad: {time}\n")
+                            f.write(f"Empieza a haber actividad: {timestamp}\n")
                             last_message = True
                     if (owlIs == False) and (time_without_change > fps * time_that_has_to_pass) and (last_message == True):
-                        f.write(f"Deja de haber actividad: {time}\n")
+                        f.write(f"Deja de haber actividad: {timestamp}\n")
                         last_message = False
                     owlWas = owlIs
             vs.release()
-            f.write(f"Acaba el vídeo: {time}\n\n")
+            f.write(f"Acaba el vídeo: {timestamp}\n\n")
     messagebox.showinfo(message="El proceso ha finalizado con éxito.")
 
 
