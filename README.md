@@ -1,4 +1,4 @@
-# Movement Detector
+# Owl Nest Watcher
 
 A desktop GUI tool that processes batches of video files and produces a timestamped activity report for each one — logging exactly when movement starts and stops throughout the footage.
 
