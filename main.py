@@ -9,13 +9,7 @@ from tkinter import filedialog
 from tkinter import messagebox
 
 
-def movement_detector(carpeta,carpetanueva):
-    file_title = file_title_grid.get()
-    min_area = float(min_area_grid.get())
-    contrast = float(contrast_grid.get())
-    brightness = int(brightness_grid.get())
-    speed = float(speed_grid.get())
-    time_that_has_to_pass = float(time_that_has_to_pass_grid.get())
+def movement_detector(carpeta, carpetanueva, file_title, min_area, contrast, brightness, speed, time_that_has_to_pass):
     with open(f'{carpetanueva}/{file_title}.txt', 'w') as f:
         for i,video in enumerate(os.listdir(carpeta)):
             displayedText.set(f"Analizando archivo {i+1} de {len(os.listdir(carpeta))}")
@@ -163,7 +157,16 @@ if __name__ == "__main__":
     time_that_has_to_pass_grid.grid(row=time_that_has_to_pass_grid_position[0],column=time_that_has_to_pass_grid_position[1],padx=padx,pady=pady)
     time_that_has_to_pass_grid.insert(END,0)
     min_area_grid.insert(END,500)
-    main_button = ttk.Button(text="Ejecutar",command=lambda: movement_detector(old_folder_path,new_folder_path))
+    main_button = ttk.Button(text="Ejecutar",command=lambda: movement_detector(
+        old_folder_path,
+        new_folder_path,
+        file_title=file_title_grid.get(),
+        min_area=float(min_area_grid.get()),
+        contrast=float(contrast_grid.get()),
+        brightness=int(brightness_grid.get()),
+        speed=float(speed_grid.get()),
+        time_that_has_to_pass=float(time_that_has_to_pass_grid.get()),
+    ))
     main_button.grid(row=main_button_position[0],column=main_button_position[1],padx=padx,pady=pady)
     displayedText = StringVar()
     label = ttk.Label(textvariable=displayedText)
